@@ -292,6 +292,28 @@ function Peer(options) {
     this.pc.on('signalingStateChange', this.emit.bind(this, 'signalingStateChange'));
     this.logger = this.parent.logger;
 
+    //if (webrtc.dataChannel) {	
+    // we may not have reliable channels
+    try {
+        this.reliableChannel = this.getDataChannel('reliable', {reliable: true});
+        console.log("Reliable channel:"+this.reliableChannel);
+        if (!this.reliableChannel.reliable) throw Error('Failed to make reliable channel');
+    } catch (e) {
+        this.logger.warn('Failed to create reliable data channel.');
+        this.reliableChannel = false;
+        delete this.channels.reliable;
+    }
+    // in FF I can't seem to create unreliable channels now
+    try {
+        this.unreliableChannel = this.getDataChannel('unreliable', {reliable: false, preset: true});
+        if (this.unreliableChannel.unreliable !== false) throw Error('Failed to make unreliable channel');
+    } catch (e) {
+        this.logger.warn('Failed to create unreliable data channel.');
+        this.unreliableChannel = false;
+        delete this.channels.unreliableChannel;
+    }
+    //}
+
     // handle screensharing/broadcast mode
     if (options.type === 'screen') {
         if (this.parent.localScreen && this.sharemyscreen) {
